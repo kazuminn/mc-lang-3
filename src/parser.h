@@ -223,30 +223,36 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 }
 
 static std::unique_ptr<ExprAST> ParseIfExpr() {
-    // TODO 3.3: If文のパーシングを実装してみよう。
-    // 1. ParseIfExprに来るということは現在のトークンが"if"なので、
-    // トークンを次に進めます。
 	getNextToken();
-    // 2. ifの次はbranching conditionを表すexpressionがある筈なので、
-    // ParseExpressionを呼んでconditionをパースします。
 	auto cond_ex = ParseExpression();
-    // 3. "if x < 4 then .."のような文の場合、今のトークンは"then"である筈なので
     // それをチェックし、トークンを次に進めます。
-	if(lexer.getIdentifier() != "then"){
-    	    return LogError("next token is not then");
+	if(CurTok != '{'){
+    	    return LogError("next token is not {");
 	}
         getNextToken();
     // 4. "then"ブロックのexpressionをParseExpressionを呼んでパースします。
 	auto then_ex = ParseExpression();
+	if(CurTok != '}'){
+    	    return LogError("next token is not }");
+	}
+	getNextToken();
 
     // 5. 3と同様、今のトークンは"else"である筈なのでチェックし、トークンを次に進めます。
 	if(lexer.getIdentifier() != "else"){
     	    return LogError("next token is not else");
 	}
         getNextToken();
+	if(CurTok != '{'){
+    	    return LogError("next token is not { of else");
+	}
+        getNextToken();
 
     // 6. "else"ブロックのexpressionをParseExpressionを呼んでパースします。
 	auto else_ex = ParseExpression();
+	if(CurTok != '}'){
+    	    return LogError("next token is not } of else");
+	}
+	getNextToken();
 
     // 7. IfExprASTを作り、returnします。
     return llvm::make_unique<IfExprAST>(std::move(cond_ex), std::move(then_ex), std::move(else_ex));

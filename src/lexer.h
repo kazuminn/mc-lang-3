@@ -14,8 +14,9 @@ enum Token {
     tok_identifier = -3,
     tok_number = -4,
     tok_if = -5,
-    tok_then = -6,
-    tok_else = -7
+    tok_else = -7,
+    tok_lbracket = -8,
+    tok_rbracket = -9
 };
 
 class Lexer {
@@ -40,6 +41,10 @@ class Lexer {
                 while (isalnum((lastChar = getNextChar(iFile))))
                     identifierStr += lastChar;
 
+                if (identifierStr == "{")
+                    return tok_lbracket;
+                if (identifierStr == "}")
+                    return tok_rbracket;
                 if (identifierStr == "def")
                     return tok_def;
                 // TODO 3.2: "if", "then", "else"をトークナイズしてみよう
@@ -48,8 +53,6 @@ class Lexer {
 		    return tok_if;
 		if (identifierStr == "else")
 		    return tok_else;
-		if (identifierStr == "then")
-		    return tok_then;
                 return tok_identifier;
             }
 
