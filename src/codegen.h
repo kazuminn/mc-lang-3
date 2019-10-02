@@ -87,6 +87,8 @@ Value *BinaryAST::codegen() {
         // llvm::CmpInst::ICMP_SLT: https://llvm.org/doxygen/classllvm_1_1CmpInst.html#a283f9a5d4d843d20c40bb4d3e364bb05
         // CreateIntCast: https://llvm.org/doxygen/classllvm_1_1IRBuilder.html#a5bb25de40672dedc0d65e608e4b78e2f
         // CreateICmpの返り値がi1(1bit)なので、CreateIntCastはそれをint64にcastするのに用います。
+	case '<':
+	    return Builder.CreateIntCast(Builder.CreateICmp(llvm::CmpInst::ICMP_SLT,L ,R, "sltcmp"),Type::getInt64Ty(Context), true, "cast_i1_to_int64");
         default:
             return LogErrorV("invalid binary operator");
     }
@@ -185,6 +187,14 @@ Value *IfExprAST::codegen() {
     // TODO 3.4: "else"ブロックのcodegenを実装しよう
     // "then"ブロックを参考に、"else"ブロックのcodegenを実装して下さい。
     // 注意: 20行下のコメントアウトを外して下さい。
+    Builder.SetInsertPoint(ElseBB);
+    Value *ElseV = Else->codegen();
+    if (!ElseV)
+        return nullptr;
+    // "then"のブロックから出る時は"ifcont"ブロックに飛ぶ。
+    Builder.CreateBr(MergeBB);
+    // ThenBBをアップデートする。
+    ElseBB = Builder.GetInsertBlock();
     ParentFunc->getBasicBlockList().push_back(ElseBB);
 
     // "ifcont"ブロックのcodegen
@@ -202,7 +212,7 @@ Value *IfExprAST::codegen() {
 
     PN->addIncoming(ThenV, ThenBB);
     // TODO 3.4:を実装したらコメントアウトを外して下さい。
-    // PN->addIncoming(ElseV, ElseBB);
+     PN->addIncoming(ElseV, ElseBB);
     return PN;
 }
 
